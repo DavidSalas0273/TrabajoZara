@@ -1,4 +1,4 @@
-import type { AdminStats, CurrentTripResponse, Flight, FlightSearchResponse, Reservation, Seat, User, UserProfile } from '../types';
+import type { AdminStats, CatalogItem, CurrentTripResponse, Flight, FlightSearchResponse, Reservation, Seat, User, UserProfile } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:4000/api`;
 export const TOKEN_KEY = 'flight_token';
@@ -38,6 +38,11 @@ export const api = {
   deleteTripService: (tripId: number, serviceId: number) => request<{ message: string }>(`/trips/${tripId}/services/${serviceId}`, { method: 'DELETE' }),
   tripSummary: (tripId: number) => request<{ services: CurrentTripResponse['services']; costs: CurrentTripResponse['summary'] }>(`/trips/${tripId}/summary`),
   confirmTrip: (tripId: number, paymentMethod: string) => request<{ message: string; status: string }>(`/trips/${tripId}/confirm`, { method: 'POST', body: JSON.stringify({ paymentMethod }) }),
+  catalog: () => request<CatalogItem[]>('/catalog'),
+  adminCatalog: () => request<CatalogItem[]>('/admin/catalog'),
+  createCatalogItem: (data: Omit<CatalogItem, 'id'>) => request<{ id: number; message: string }>('/admin/catalog', { method: 'POST', body: JSON.stringify(data) }),
+  updateCatalogItem: (id: number, data: Omit<CatalogItem, 'id'>) => request<{ message: string }>(`/admin/catalog/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteCatalogItem: (id: number) => request<{ message: string }>(`/admin/catalog/${id}`, { method: 'DELETE' }),
   stats: () => request<AdminStats>('/admin/stats'),
   reservations: () => request<Reservation[]>('/reservations')
 };

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../services/api';
-import type { AdminStats, Reservation } from '../types';
+import type { AdminStats, CatalogItem, Reservation } from '../types';
 
 const formatCurrency = (value: number) => `$${value.toLocaleString('es-CO')}`;
 type Aggregate = { total: number; orders: number };
@@ -9,10 +9,12 @@ function routeLabel(reservation: Reservation) {
   return `${reservation.origin} → ${reservation.destination}`;
 }
 
-function AdminDashboard() {
+function AdminDashboard({ section = 'ventas' }: { section?: 'ventas' | 'catalogo' | 'ordenes' }) {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [error, setError] = useState('');
+  const [catalog, setCatalog] = useState<CatalogItem[]>([]);
+  const [form, setForm] = useState({ type: 'hotel', name: '', description: '', price: 0, active: 1 });
 
   useEffect(() => {
     Promise.all([api.stats(), api.reservations()])
@@ -21,7 +23,20 @@ function AdminDashboard() {
         setReservations(nextReservations);
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'No se pudo cargar el dashboard.'));
+    api.adminCatalog().then(setCatalog).catch(() => undefined);
   }, []);
+
+  const saveCatalogItem = async () => {
+    if (!form.name || !form.description || !form.price) return;
+    await api.createCatalogItem({ ...form, type: form.type as CatalogItem['type'] });
+    setForm({ type: 'hotel', name: '', description: '', price: 0, active: 1 });
+    setCatalog(await api.adminCatalog());
+  };
+
+  const toggleItem = async (item: CatalogItem) => {
+    await api.updateCatalogItem(item.id, { ...item, active: item.active ? 0 : 1 });
+    setCatalog(await api.adminCatalog());
+  };
 
   if (error) return <div className="page"><p className="error">{error}</p></div>;
 
@@ -74,6 +89,8 @@ function AdminDashboard() {
         </div>
       </section>
 
+      {section === 'ventas' && (
+      <>
       <section className="kpi-grid">
         <article className="kpi-card violet">
           <div className="kpi-icon">$</div>
@@ -190,7 +207,37 @@ function AdminDashboard() {
           </div>
         </article>
       </section>
+      </>
+      )}
 
+      {section === 'catalogo' && (
+      <section className="analytics-panel">
+        <div className="panel-head">
+          <div>
+            <h2>Catalogo para usuarios</h2>
+            <p>Servicios visibles en el carrito de viaje del usuario</p>
+          </div>
+        </div>
+        <div className="form-grid">
+          <label>Tipo<select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}><option value="hotel">Hotel</option><option value="transporte">Transporte</option><option value="comida">Comida</option></select></label>
+          <label>Nombre<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label>
+          <label>Descripcion<input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label>
+          <label>Precio<input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} /></label>
+          <button className="primary-button full" onClick={saveCatalogItem}>Agregar servicio</button>
+        </div>
+        <div className="bar-list">
+          {catalog.map((item) => (
+            <div className="bar-row" key={item.id}>
+              <div><strong>{item.name}</strong><span>{item.type} · ${Math.round(item.price).toLocaleString('es-CO')}</span></div>
+              <div />
+              <button className="nav-item" onClick={() => toggleItem(item)}>{item.active ? 'Desactivar' : 'Activar'}</button>
+            </div>
+          ))}
+        </div>
+      </section>
+      )}
+
+      {section === 'ordenes' && (
       <section className="analytics-panel">
         <div className="panel-head">
           <div>
@@ -216,6 +263,7 @@ function AdminDashboard() {
           </table>
         </div>
       </section>
+      )}
     </div>
   );
 }

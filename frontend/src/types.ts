@@ -60,6 +60,15 @@ export interface TripService {
   metadata?: string;
 }
 
+export interface CatalogItem {
+  id: number;
+  type: 'hotel' | 'transporte' | 'comida';
+  name: string;
+  description: string;
+  price: number;
+  active: number;
+}
+
 export interface TripSummary {
   subtotal: number;
   taxes: number;

@@ -388,6 +388,41 @@ app.get('/api/admin/stats', requireAuth, requireRole('administrativo'), asyncHan
   });
 }));
 
+app.get('/api/catalog', requireAuth, asyncHandler(async (_request, response) => {
+  const items = await all('SELECT * FROM service_catalog WHERE active = 1 ORDER BY type, name');
+  response.json(items);
+}));
+
+app.get('/api/admin/catalog', requireAuth, requireRole('administrativo'), asyncHandler(async (_request, response) => {
+  const items = await all('SELECT * FROM service_catalog ORDER BY type, name');
+  response.json(items);
+}));
+
+app.post('/api/admin/catalog', requireAuth, requireRole('administrativo'), asyncHandler(async (request, response) => {
+  const { type, name, description, price, active } = request.body as { type: string; name: string; description: string; price: number; active?: number };
+  if (!type || !name || !description || !price) throw new HttpError(400, 'Datos de catalogo incompletos.');
+  const created = await run('INSERT INTO service_catalog (type, name, description, price, active) VALUES (?, ?, ?, ?, ?)', [
+    type, name, description, price, typeof active === 'number' ? active : 1
+  ]);
+  response.status(201).json({ id: created.id, message: 'Servicio creado.' });
+}));
+
+app.put('/api/admin/catalog/:id', requireAuth, requireRole('administrativo'), asyncHandler(async (request, response) => {
+  const { type, name, description, price, active } = request.body as { type: string; name: string; description: string; price: number; active: number };
+  const updated = await run(
+    'UPDATE service_catalog SET type = ?, name = ?, description = ?, price = ?, active = ? WHERE id = ?',
+    [type, name, description, price, active, request.params.id]
+  );
+  if (!updated.changes) throw new HttpError(404, 'Servicio no encontrado.');
+  response.json({ message: 'Servicio actualizado.' });
+}));
+
+app.delete('/api/admin/catalog/:id', requireAuth, requireRole('administrativo'), asyncHandler(async (request, response) => {
+  const deleted = await run('DELETE FROM service_catalog WHERE id = ?', [request.params.id]);
+  if (!deleted.changes) throw new HttpError(404, 'Servicio no encontrado.');
+  response.json({ message: 'Servicio eliminado.' });
+}));
+
 app.use((error: Error, _request: Request, response: Response, _next: NextFunction) => {
   if (error instanceof HttpError) return response.status(error.status).json({ message: error.message });
   return response.status(500).json({ message: 'Error interno del servidor.', detail: error.message });

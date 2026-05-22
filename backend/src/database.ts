@@ -173,6 +173,15 @@ export async function initializeDatabase() {
     FOREIGN KEY(trip_id) REFERENCES trips(id)
   )`);
 
+  await run(`CREATE TABLE IF NOT EXISTS service_catalog (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type TEXT NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    price REAL NOT NULL,
+    active INTEGER NOT NULL DEFAULT 1
+  )`);
+
   const user = await get<{ total: number }>('SELECT COUNT(*) AS total FROM users');
   if (!user?.total) {
     const users = [
@@ -296,6 +305,21 @@ export async function initializeDatabase() {
         [created.id, 'AeroVoy', 'https://dummyimage.com/64x64/1d72d2/ffffff&text=AV', 'BOG', 'CTG', 95, 0, Number(flight[5]) - 55000, 55000, 0, 80000, 150000]
       );
       await seedSeats(created.id);
+    }
+  }
+
+  const catalog = await get<{ total: number }>('SELECT COUNT(*) AS total FROM service_catalog');
+  if (!catalog?.total) {
+    const seedCatalog = [
+      ['hotel', 'Hotel Business Centro', '1 noche con desayuno incluido', 280000, 1],
+      ['hotel', 'Hotel Aeropuerto Express', 'Traslado al aeropuerto y wifi', 220000, 1],
+      ['transporte', 'Transfer privado', 'Aeropuerto - hotel - aeropuerto', 90000, 1],
+      ['transporte', 'Transporte compartido', 'Ruta compartida economica', 45000, 1],
+      ['comida', 'Plan comida premium', '2 comidas y 1 snack', 80000, 1],
+      ['comida', 'Plan comida basico', '1 comida y 1 bebida', 40000, 1]
+    ];
+    for (const row of seedCatalog) {
+      await run('INSERT INTO service_catalog (type, name, description, price, active) VALUES (?, ?, ?, ?, ?)', row);
     }
   }
 }

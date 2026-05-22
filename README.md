@@ -24,6 +24,11 @@ npm run dev
 - Backend: `http://localhost:4000`
 - Frontend: `http://localhost:5173`
 
+## Credenciales de administrador
+
+- Email: `admin@aerozara.com`
+- Password: `Admin123`
+
 ## Usuarios de prueba
 
 - Administrativo:

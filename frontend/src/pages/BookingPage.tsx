@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import SeatMap from '../components/SeatMap';
 import { api } from '../services/api';
-import type { CurrentTripResponse, Flight, Seat } from '../types';
+import type { CatalogItem, CurrentTripResponse, Flight, Seat } from '../types';
 
 const initialSearch = { origin: 'BOG', destination: 'CTG', departureDate: '2026-06-03', returnDate: '', passengers: 1, cabinClass: 'economica', minPrice: 0, maxPrice: 1000000, duration: '', stops: '' };
 
@@ -17,6 +17,7 @@ function BookingPage() {
   const [seats, setSeats] = useState<Seat[]>([]);
   const [selectedSeat, setSelectedSeat] = useState<Seat | null>(null);
   const [tripData, setTripData] = useState<CurrentTripResponse | null>(null);
+  const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [message, setMessage] = useState('');
   const [passenger, setPassenger] = useState({ fullName: '', documentNumber: '', email: '', phone: '' });
   const [paymentMethod, setPaymentMethod] = useState('tarjeta');
@@ -54,7 +55,10 @@ function BookingPage() {
     }
   };
 
-  useEffect(() => { loadTrip().catch(() => undefined); }, []);
+  useEffect(() => {
+    loadTrip().catch(() => undefined);
+    api.catalog().then(setCatalog).catch(() => undefined);
+  }, []);
 
   const addFlightToTrip = async () => {
     if (!selectedFlight || !selectedSeat) return setError('Selecciona vuelo y asiento.');
@@ -77,15 +81,16 @@ function BookingPage() {
     }
   };
 
-  const addExtraService = async (serviceType: 'hotel' | 'transporte' | 'comida') => {
+  const addExtraService = async (item: CatalogItem) => {
     if (!tripData) return;
     await api.addTripService(tripData.trip.id, {
-      serviceType,
-      name: serviceType.toUpperCase(),
-      description: `Servicio de ${serviceType}`,
+      serviceType: item.type,
+      name: item.name,
+      description: item.description,
       serviceDate: search.departureDate,
-      unitPrice: serviceType === 'hotel' ? 280000 : serviceType === 'transporte' ? 60000 : 45000,
-      quantity: 1
+      unitPrice: item.price,
+      quantity: 1,
+      metadata: JSON.stringify({ catalogId: item.id })
     });
     await loadTrip();
   };
@@ -105,33 +110,49 @@ function BookingPage() {
 
   return (
     <div className="page">
-      <section className="panel form-grid">
-        <h2>Busqueda de vuelos</h2>
-        <label>Origen<input value={search.origin} onChange={(e) => setSearch({ ...search, origin: e.target.value })} /></label>
-        <label>Destino<input value={search.destination} onChange={(e) => setSearch({ ...search, destination: e.target.value })} /></label>
-        <label>Salida<input type="date" value={search.departureDate} onChange={(e) => setSearch({ ...search, departureDate: e.target.value })} /></label>
-        <label>Regreso<input type="date" value={search.returnDate} onChange={(e) => setSearch({ ...search, returnDate: e.target.value })} /></label>
-        <label>Pasajeros<input type="number" min={1} max={9} value={search.passengers} onChange={(e) => setSearch({ ...search, passengers: Number(e.target.value) })} /></label>
-        <label>Clase<select value={search.cabinClass} onChange={(e) => setSearch({ ...search, cabinClass: e.target.value })}><option value="economica">Economica</option><option value="ejecutiva">Ejecutiva</option><option value="primera">Primera</option></select></label>
-        <label>Precio min<input type="number" value={search.minPrice} onChange={(e) => setSearch({ ...search, minPrice: Number(e.target.value) })} /></label>
-        <label>Precio max<input type="number" value={search.maxPrice} onChange={(e) => setSearch({ ...search, maxPrice: Number(e.target.value) })} /></label>
-        <label>Duracion<select value={search.duration} onChange={(e) => setSearch({ ...search, duration: e.target.value })}><option value="">Todas</option><option value="short">Corta (&lt;3h)</option><option value="medium">Media</option><option value="long">Larga</option></select></label>
-        <label>Escalas<select value={search.stops} onChange={(e) => setSearch({ ...search, stops: e.target.value })}><option value="">Todas</option><option value="direct">Directo</option><option value="one">1 escala</option><option value="two-plus">2+</option></select></label>
-        <button className="primary-button" type="button" onClick={() => searchFlights(1)}>Buscar</button>
-        <button className="nav-item" type="button" onClick={() => setSearch(initialSearch)}>Limpiar filtros</button>
+      <section className="panel flight-search-shell">
+        <div className="search-head">
+          <h2>{search.origin} - {search.destination}</h2>
+          <span>{search.departureDate}{search.returnDate ? ` · ${search.returnDate}` : ''} · {search.passengers} pasajero(s)</span>
+        </div>
+        <div className="search-filter-row">
+          <label>Origen<input value={search.origin} onChange={(e) => setSearch({ ...search, origin: e.target.value })} /></label>
+          <label>Destino<input value={search.destination} onChange={(e) => setSearch({ ...search, destination: e.target.value })} /></label>
+          <label>Salida<input type="date" value={search.departureDate} onChange={(e) => setSearch({ ...search, departureDate: e.target.value })} /></label>
+          <label>Pasajeros<input type="number" min={1} max={9} value={search.passengers} onChange={(e) => setSearch({ ...search, passengers: Number(e.target.value) })} /></label>
+          <label>Clase<select value={search.cabinClass} onChange={(e) => setSearch({ ...search, cabinClass: e.target.value })}><option value="economica">Economica</option><option value="ejecutiva">Ejecutiva</option><option value="primera">Primera</option></select></label>
+          <label>Escalas<select value={search.stops} onChange={(e) => setSearch({ ...search, stops: e.target.value })}><option value="">Todas</option><option value="direct">Directo</option><option value="one">1 escala</option><option value="two-plus">2+</option></select></label>
+          <button className="primary-button" type="button" onClick={() => searchFlights(1)}>Buscar</button>
+          <button className="nav-item" type="button" onClick={() => setSearch(initialSearch)}>Limpiar</button>
+        </div>
       </section>
-      <section className="panel">
-        <h2>Resultados ({total})</h2>
-        {loading && <p>Cargando...</p>}
-        {!loading && !results.length && <p>No se encontraron vuelos. Fechas sugeridas: {alternatives.join(', ') || 'sin sugerencias'}</p>}
-        {results.map((flight) => (
-          <button className={`flight-card ${selectedFlight?.id === flight.id ? 'selected' : ''}`} key={flight.id} onClick={async () => { setSelectedFlight(flight); setSeats(await api.seats(flight.id)); }}>
-            <strong>{flight.airline} · {flight.code}</strong>
-            <span>{flight.origin} - {flight.destination} · {flight.departure_time}</span>
-            <small>Duracion: {flight.duration_minutes} min · Escalas: {flight.stops} · Precio final: ${Math.round(flight.total_price).toLocaleString('es-CO')}</small>
-          </button>
-        ))}
-        {total > 10 && <div className="top-actions"><button className="nav-item" disabled={page === 1} onClick={() => searchFlights(page - 1)}>Anterior</button><span>Pagina {page}</span><button className="nav-item" disabled={page * 10 >= total} onClick={() => searchFlights(page + 1)}>Siguiente</button></div>}
+      <section className="flight-results-grid">
+        <div className="panel flights-list-panel">
+          <h2>Resultados ({total})</h2>
+          {loading && <p>Cargando...</p>}
+          {!loading && !results.length && <p>No se encontraron vuelos. Fechas sugeridas: {alternatives.join(', ') || 'sin sugerencias'}</p>}
+          {results.map((flight) => (
+            <button className={`compact-flight ${selectedFlight?.id === flight.id ? 'selected' : ''}`} key={flight.id} onClick={async () => { setSelectedFlight(flight); setSeats(await api.seats(flight.id)); }}>
+              <div>
+                <strong>{flight.departure_time.slice(11, 16)} - {flight.arrival_time.slice(11, 16)}</strong>
+                <span>{flight.origin} - {flight.destination} · {flight.airline}</span>
+                <small>{flight.duration_minutes} min · {flight.stops === 0 ? 'Directo' : `${flight.stops} escala(s)`}</small>
+              </div>
+              <b>${Math.round(flight.total_price).toLocaleString('es-CO')}</b>
+            </button>
+          ))}
+          {total > 10 && <div className="top-actions"><button className="nav-item" disabled={page === 1} onClick={() => searchFlights(page - 1)}>Anterior</button><span>Pagina {page}</span><button className="nav-item" disabled={page * 10 >= total} onClick={() => searchFlights(page + 1)}>Siguiente</button></div>}
+        </div>
+        <div className="panel map-visual-panel">
+          <h2>Explora rutas</h2>
+          <div className="fake-map">
+            {results.slice(0, 8).map((flight, index) => (
+              <span key={flight.id} className="map-price-tag" style={{ top: `${12 + index * 10}%`, left: `${15 + (index % 3) * 24}%` }}>
+                {flight.destination.slice(0, 3).toUpperCase()} ${Math.round(flight.total_price / 1000)}k
+              </span>
+            ))}
+          </div>
+        </div>
       </section>
       <div className="layout-grid">
         <section className="panel">
@@ -155,9 +176,11 @@ function BookingPage() {
       <section className="panel">
         <h2>Carrito de viaje {tripData?.trip.trip_code || ''}</h2>
         <div className="top-actions">
-          <button className="nav-item" onClick={() => addExtraService('hotel')}>+ Hotel</button>
-          <button className="nav-item" onClick={() => addExtraService('transporte')}>+ Transporte</button>
-          <button className="nav-item" onClick={() => addExtraService('comida')}>+ Comida</button>
+          {catalog.map((item) => (
+            <button className="nav-item" key={item.id} onClick={() => addExtraService(item)}>
+              + {item.name} (${Math.round(item.price).toLocaleString('es-CO')})
+            </button>
+          ))}
         </div>
         {(tripData?.services || []).map((service) => (
           <div className="flight-card" key={service.id}>
