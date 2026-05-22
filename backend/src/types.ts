@@ -1,7 +1,7 @@
 export interface UserPayload {
   id: number;
   email: string;
-  role: string;
+  role: 'administrativo' | 'usuario';
 }
 
 export interface LoginBody {

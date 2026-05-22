@@ -46,7 +46,7 @@ function BookingPage() {
   };
 
   return (
-    <main className="page">
+    <div className="page">
       <section className="section-heading">
         <span className="eyebrow">Compra de tiquetes</span>
         <h1>Selecciona vuelo, asiento y pasajero</h1>
@@ -79,7 +79,7 @@ function BookingPage() {
         {message && <p className="success full">{message}</p>}
         <button className="primary-button full" type="submit">Confirmar compra</button>
       </form>
-    </main>
+    </div>
   );
 }
 

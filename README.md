@@ -24,12 +24,27 @@ npm run dev
 - Backend: `http://localhost:4000`
 - Frontend: `http://localhost:5173`
 
-## Usuario de prueba
+## Usuarios de prueba
 
-- Email: `admin@aerozara.com`
-- Password: `Admin123`
+- Administrativo:
+  - Email: `admin@aerozara.com`
+  - Password: `Admin123`
+- Usuario comun:
+  - Email: `usuario@aerozara.com`
+  - Password: `Usuario123`
 
 El login guarda el token JWT en `localStorage` con la clave `flight_token`.
+Tambien guarda el usuario en `localStorage` con la clave `flight_user` para mostrar opciones segun rol.
+
+## Si el puerto 4000 esta ocupado
+
+El error `EADDRINUSE` significa que ya hay un backend corriendo en `4000`. Cierra el proceso anterior o usa otro puerto:
+
+```bash
+cd backend
+$env:PORT=4001
+npm run dev
+```
 
 ## Comandos de verificacion
 

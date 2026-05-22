@@ -2,6 +2,7 @@ import type { AdminStats, Flight, Reservation, Seat, User } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 export const TOKEN_KEY = 'flight_token';
+export const USER_KEY = 'flight_user';
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem(TOKEN_KEY);
@@ -25,6 +26,7 @@ export const api = {
       body: JSON.stringify({ email, password })
     });
     localStorage.setItem(TOKEN_KEY, payload.token);
+    localStorage.setItem(USER_KEY, JSON.stringify(payload.user));
     return payload;
   },
   flights: () => request<Flight[]>('/flights'),

@@ -16,10 +16,10 @@ function AdminDashboard() {
       .catch((err) => setError(err instanceof Error ? err.message : 'No se pudo cargar el dashboard.'));
   }, []);
 
-  if (error) return <main className="page"><p className="error">{error}</p></main>;
+  if (error) return <div className="page"><p className="error">{error}</p></div>;
 
   return (
-    <main className="page">
+    <div className="page">
       <section className="section-heading">
         <span className="eyebrow">Administracion</span>
         <h1>Dashboard con estadisticas reales</h1>
@@ -50,7 +50,7 @@ function AdminDashboard() {
           </table>
         </div>
       </section>
-    </main>
+    </div>
   );
 }
 

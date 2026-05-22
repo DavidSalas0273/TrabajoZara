@@ -104,12 +104,24 @@ export async function initializeDatabase() {
 
   const user = await get<{ total: number }>('SELECT COUNT(*) AS total FROM users');
   if (!user?.total) {
-    await run('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)', [
-      'Administrador AeroZara',
-      'admin@aerozara.com',
-      bcrypt.hashSync('Admin123', 10),
-      'admin'
-    ]);
+    const users = [
+      ['Administrador AeroZara', 'admin@aerozara.com', bcrypt.hashSync('Admin123', 10), 'administrativo'],
+      ['Usuario AeroZara', 'usuario@aerozara.com', bcrypt.hashSync('Usuario123', 10), 'usuario']
+    ];
+    for (const sampleUser of users) {
+      await run('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)', sampleUser);
+    }
+  } else {
+    await run("UPDATE users SET role = 'administrativo' WHERE email = 'admin@aerozara.com' AND role = 'admin'");
+    const commonUser = await get<{ id: number }>('SELECT id FROM users WHERE email = ?', ['usuario@aerozara.com']);
+    if (!commonUser) {
+      await run('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)', [
+        'Usuario AeroZara',
+        'usuario@aerozara.com',
+        bcrypt.hashSync('Usuario123', 10),
+        'usuario'
+      ]);
+    }
   }
 
   const flights = await get<{ total: number }>('SELECT COUNT(*) AS total FROM flights');

@@ -2,7 +2,7 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  role: string;
+  role: 'administrativo' | 'usuario';
 }
 
 export interface Flight {

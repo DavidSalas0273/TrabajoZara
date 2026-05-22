@@ -29,6 +29,15 @@ function requireAuth(request: AuthRequest, response: Response, next: NextFunctio
   }
 }
 
+function requireRole(role: UserPayload['role']) {
+  return (request: AuthRequest, response: Response, next: NextFunction) => {
+    if (request.user?.role !== role) {
+      return response.status(403).json({ message: 'No tienes permisos para acceder a esta seccion.' });
+    }
+    return next();
+  };
+}
+
 app.get('/api/health', (_request, response) => {
   response.json({ status: 'ok', service: 'gestion-vuelos-api' });
 });
@@ -72,7 +81,7 @@ app.get('/api/flights/:id/seats', requireAuth, async (request, response) => {
   response.json(seats);
 });
 
-app.get('/api/reservations', requireAuth, async (_request, response) => {
+app.get('/api/reservations', requireAuth, requireRole('administrativo'), async (_request, response) => {
   const reservations = await all(`
     SELECT r.*, f.code AS flightCode, f.origin, f.destination, p.full_name AS passengerName,
       p.document_number AS documentNumber, s.seat_number AS seatNumber, pay.amount, pay.method AS paymentMethod
@@ -128,7 +137,7 @@ app.post('/api/purchase', requireAuth, async (request: Request<unknown, unknown,
   }
 });
 
-app.get('/api/admin/stats', requireAuth, async (_request: AuthRequest, response) => {
+app.get('/api/admin/stats', requireAuth, requireRole('administrativo'), async (_request: AuthRequest, response) => {
   const [flights, seats, reservations, revenue, passengers] = await Promise.all([
     get<{ total: number }>('SELECT COUNT(*) AS total FROM flights'),
     get<{ sold: number; total: number }>("SELECT SUM(CASE WHEN status = 'sold' THEN 1 ELSE 0 END) AS sold, COUNT(*) AS total FROM seats"),
@@ -151,5 +160,12 @@ app.use((error: Error, _request: Request, response: Response, _next: NextFunctio
 });
 
 initializeDatabase().then(() => {
-  app.listen(PORT, () => console.log(`API gestion de vuelos en http://localhost:${PORT}`));
+  const server = app.listen(PORT, () => console.log(`API gestion de vuelos en http://localhost:${PORT}`));
+  server.on('error', (error: NodeJS.ErrnoException) => {
+    if (error.code === 'EADDRINUSE') {
+      console.error(`El puerto ${PORT} ya esta en uso. Cierra el proceso anterior o ejecuta con PORT=4001.`);
+      process.exit(1);
+    }
+    throw error;
+  });
 });
