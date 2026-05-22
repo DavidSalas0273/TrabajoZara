@@ -28,7 +28,7 @@ function App() {
   if (!token || !user) return <LoginPage onLogin={(nextToken, nextUser) => { setToken(nextToken); setUser(nextUser); }} />;
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${view === 'admin' && isAdmin ? 'admin-shell' : ''}`}>
       <aside className="sidebar">
         <div className="logo">AERO</div>
         <div className="logo-sub">Flight Suite</div>
