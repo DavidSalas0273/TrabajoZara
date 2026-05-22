@@ -1234,6 +1234,51 @@ th {
   color: #0d8a5a;
 }
 
+/* Mantener el mismo diseño de menu lateral en todas las vistas */
+.admin-shell .sidebar {
+  background: rgba(255,255,255,.86);
+  border-right: 1px solid var(--line);
+}
+
+.admin-shell .logo {
+  font-family: "Cormorant Garamond", serif;
+  font-size: 2.2rem;
+  letter-spacing: .24em;
+  color: var(--blue-800);
+}
+
+.admin-shell .logo::before {
+  content: none;
+}
+
+.admin-shell .logo-sub,
+.admin-shell .nav-section {
+  color: var(--muted);
+}
+
+.admin-shell .nav-item {
+  color: #5d6f89;
+}
+
+.admin-shell .nav-item:hover,
+.admin-shell .nav-item.active {
+  background: var(--blue-100);
+  color: var(--blue-800);
+  box-shadow: none;
+}
+
+.admin-shell .sidebar-footer {
+  border-top: 1px solid var(--line);
+}
+
+.admin-shell .user-name {
+  color: var(--text);
+}
+
+.admin-shell .user-tier {
+  color: var(--blue-700);
+}
+
 .flight-search-shell {
   display: grid;
   gap: 1rem;

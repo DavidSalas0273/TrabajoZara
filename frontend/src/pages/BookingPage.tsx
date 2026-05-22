@@ -58,6 +58,7 @@ function BookingPage() {
   useEffect(() => {
     loadTrip().catch(() => undefined);
     api.catalog().then(setCatalog).catch(() => undefined);
+    searchFlights(1).catch(() => undefined);
   }, []);
 
   const addFlightToTrip = async () => {
