@@ -430,7 +430,9 @@ th {
   min-height: 100vh;
   padding: 2.7rem 3rem;
   overflow: hidden;
-  background: linear-gradient(150deg, var(--blue-950), var(--blue-900) 56%, var(--blue-800));
+  background:
+    linear-gradient(160deg, rgba(7,21,47,.76), rgba(11,31,69,.72)),
+    url('https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1500&q=80') center/cover no-repeat;
   color: white;
 }
 
@@ -479,7 +481,7 @@ th {
   max-width: 520px;
   margin-bottom: 1.45rem;
   font-family: "Cormorant Garamond", serif;
-  font-size: clamp(3rem, 6vw, 4.7rem);
+  font-size: clamp(2.6rem, 5.2vw, 4.1rem);
   font-weight: 300;
   line-height: .98;
   letter-spacing: -.03em;
@@ -801,6 +803,29 @@ th {
 .register-row {
   text-align: center;
   font-size: 13px;
+}
+
+.login-left-card {
+  position: relative;
+  z-index: 2;
+  border: 1px solid rgba(255,255,255,.24);
+  border-radius: 12px;
+  background: rgba(255,255,255,.12);
+  backdrop-filter: blur(6px);
+  padding: .9rem 1rem;
+  max-width: 380px;
+}
+
+.login-left-card strong {
+  display: block;
+  font-size: 14px;
+}
+
+.login-left-card span {
+  display: block;
+  margin-top: .25rem;
+  font-size: 12px;
+  color: rgba(255,255,255,.85);
 }
 
 @keyframes loginDrift {
@@ -1311,6 +1336,10 @@ th {
   gap: 1rem;
 }
 
+.flight-results-grid.single-column {
+  grid-template-columns: 1fr;
+}
+
 .flights-list-panel {
   max-height: 640px;
   overflow: auto;
@@ -1350,32 +1379,16 @@ th {
   font-size: 1.2rem;
 }
 
-.map-visual-panel {
+.flight-pick-side {
   display: grid;
-  gap: .75rem;
+  justify-items: end;
+  gap: .2rem;
 }
 
-.fake-map {
-  position: relative;
-  min-height: 500px;
-  border-radius: 14px;
-  background:
-    linear-gradient(180deg, rgba(29,114,210,.1), rgba(29,114,210,.1)),
-    url('https://maps.gstatic.com/tactile/basepage/pegman_sherlock.png');
-  background-size: cover;
-  border: 1px solid #cadcf0;
-  overflow: hidden;
-}
-
-.map-price-tag {
-  position: absolute;
-  background: white;
-  border: 1px solid #cddcf0;
-  border-radius: 8px;
-  padding: .2rem .45rem;
+.flight-pick-side span {
   font-size: 12px;
+  color: var(--blue-700);
   font-weight: 700;
-  color: #1e293b;
 }
 
 .profile-view {

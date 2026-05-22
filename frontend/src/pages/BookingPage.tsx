@@ -1,9 +1,20 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import SeatMap from '../components/SeatMap';
 import { api } from '../services/api';
 import type { CatalogItem, CurrentTripResponse, Flight, Seat } from '../types';
 
-const initialSearch = { origin: 'BOG', destination: 'CTG', departureDate: '2026-06-03', returnDate: '', passengers: 1, cabinClass: 'economica', minPrice: 0, maxPrice: 1000000, duration: '', stops: '' };
+const initialSearch = {
+  origin: 'BOG',
+  destination: 'CTG',
+  departureDate: '2026-06-03',
+  returnDate: '',
+  passengers: 1,
+  cabinClass: 'economica',
+  minPrice: 0,
+  maxPrice: 1000000,
+  duration: '',
+  stops: ''
+};
 
 function BookingPage() {
   const [search, setSearch] = useState(initialSearch);
@@ -127,34 +138,42 @@ function BookingPage() {
           <button className="nav-item" type="button" onClick={() => setSearch(initialSearch)}>Limpiar</button>
         </div>
       </section>
-      <section className="flight-results-grid">
+
+      <section className="flight-results-grid single-column">
         <div className="panel flights-list-panel">
           <h2>Resultados ({total})</h2>
           {loading && <p>Cargando...</p>}
           {!loading && !results.length && <p>No se encontraron vuelos. Fechas sugeridas: {alternatives.join(', ') || 'sin sugerencias'}</p>}
           {results.map((flight) => (
-            <button className={`compact-flight ${selectedFlight?.id === flight.id ? 'selected' : ''}`} key={flight.id} onClick={async () => { setSelectedFlight(flight); setSeats(await api.seats(flight.id)); }}>
+            <button
+              className={`compact-flight ${selectedFlight?.id === flight.id ? 'selected' : ''}`}
+              key={flight.id}
+              onClick={async () => {
+                setSelectedFlight(flight);
+                setSeats(await api.seats(flight.id));
+              }}
+            >
               <div>
                 <strong>{flight.departure_time.slice(11, 16)} - {flight.arrival_time.slice(11, 16)}</strong>
                 <span>{flight.origin} - {flight.destination} · {flight.airline}</span>
                 <small>{flight.duration_minutes} min · {flight.stops === 0 ? 'Directo' : `${flight.stops} escala(s)`}</small>
               </div>
-              <b>${Math.round(flight.total_price).toLocaleString('es-CO')}</b>
+              <div className="flight-pick-side">
+                <b>${Math.round(flight.total_price).toLocaleString('es-CO')}</b>
+                <span>{selectedFlight?.id === flight.id ? 'Seleccionado' : 'Seleccionar'}</span>
+              </div>
             </button>
           ))}
-          {total > 10 && <div className="top-actions"><button className="nav-item" disabled={page === 1} onClick={() => searchFlights(page - 1)}>Anterior</button><span>Pagina {page}</span><button className="nav-item" disabled={page * 10 >= total} onClick={() => searchFlights(page + 1)}>Siguiente</button></div>}
-        </div>
-        <div className="panel map-visual-panel">
-          <h2>Explora rutas</h2>
-          <div className="fake-map">
-            {results.slice(0, 8).map((flight, index) => (
-              <span key={flight.id} className="map-price-tag" style={{ top: `${12 + index * 10}%`, left: `${15 + (index % 3) * 24}%` }}>
-                {flight.destination.slice(0, 3).toUpperCase()} ${Math.round(flight.total_price / 1000)}k
-              </span>
-            ))}
-          </div>
+          {total > 10 && (
+            <div className="top-actions">
+              <button className="nav-item" disabled={page === 1} onClick={() => searchFlights(page - 1)}>Anterior</button>
+              <span>Pagina {page}</span>
+              <button className="nav-item" disabled={page * 10 >= total} onClick={() => searchFlights(page + 1)}>Siguiente</button>
+            </div>
+          )}
         </div>
       </section>
+
       <div className="layout-grid">
         <section className="panel">
           <h2>Detalle y asiento</h2>
@@ -174,6 +193,7 @@ function BookingPage() {
           <button className="primary-button full" type="button" onClick={addFlightToTrip}>Agregar vuelo al viaje</button>
         </section>
       </div>
+
       <section className="panel">
         <h2>Carrito de viaje {tripData?.trip.trip_code || ''}</h2>
         <div className="top-actions">
@@ -187,11 +207,26 @@ function BookingPage() {
           <div className="flight-card" key={service.id}>
             <strong>{service.name} · {service.service_type}</strong>
             <span>{service.description} · {service.service_date}</span>
-            <small>Subtotal: ${Math.round(service.subtotal).toLocaleString('es-CO')} {service.availability_status === 'limited' ? '· disponibilidad limitada' : ''}</small>
-            <button className="nav-item" onClick={async () => { await api.deleteTripService(tripData!.trip.id, service.id); await loadTrip(); }}>Eliminar</button>
+            <small>
+              Subtotal: ${Math.round(service.subtotal).toLocaleString('es-CO')}
+              {service.availability_status === 'limited' ? ' · disponibilidad limitada' : ''}
+            </small>
+            <button
+              className="nav-item"
+              onClick={async () => {
+                await api.deleteTripService(tripData!.trip.id, service.id);
+                await loadTrip();
+              }}
+            >
+              Eliminar
+            </button>
           </div>
         ))}
-        <p>Subtotal: ${Math.round(tripData?.summary.subtotal || 0).toLocaleString('es-CO')} · Impuestos: ${Math.round(tripData?.summary.taxes || 0).toLocaleString('es-CO')} · Total: ${Math.round(tripData?.summary.total || 0).toLocaleString('es-CO')}</p>
+        <p>
+          Subtotal: ${Math.round(tripData?.summary.subtotal || 0).toLocaleString('es-CO')}
+          {' · '}Impuestos: ${Math.round(tripData?.summary.taxes || 0).toLocaleString('es-CO')}
+          {' · '}Total: ${Math.round(tripData?.summary.total || 0).toLocaleString('es-CO')}
+        </p>
         <label>Metodo de pago<select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}><option value="tarjeta">Tarjeta</option><option value="pse">PSE</option><option value="efectivo">Efectivo</option></select></label>
         <div className="top-actions">
           <button className="primary-button" disabled={!canProceed} onClick={confirmTrip}>Confirmar y pagar</button>

@@ -35,8 +35,12 @@ function LoginPage({ onLogin }: { onLogin: (token: string, user: User) => void }
       <section className="login-left">
         <div className="login-brand">AeroVoy</div>
         <div className="login-copy">
-          <h1>Gestion de vuelos y reservas</h1>
-          <p>Busqueda, compra, viaje y seguimiento con roles de usuario y administrativo.</p>
+          <h1>Tu viaje empieza aqui</h1>
+          <p>Busca vuelos, arma tu viaje y gestiona reservas en una experiencia clara y rapida.</p>
+        </div>
+        <div className="login-left-card">
+          <strong>Vuelos en tiempo real</strong>
+          <span>Consulta disponibilidad, precios y servicios extra en un solo lugar.</span>
         </div>
       </section>
       <section className="login-right">
