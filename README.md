@@ -1,6 +1,6 @@
-# Sistema de Gestion de Vuelos
+# AeroVoy - Gestion de Vuelos y Viajes
 
-Aplicacion full stack para gestionar vuelos, asientos, pasajeros, reservas, pagos y estadisticas administrativas.
+Aplicacion full stack para busqueda, compra, gestion del viaje y seguimiento de reservas con roles `usuario` y `administrativo`.
 
 ## Tecnologias
 
@@ -53,21 +53,33 @@ npm run build
 npm run check
 ```
 
-## Rutas principales
+## Rutas principales API
 
 - `GET /api/health`
+- `POST /api/auth/register`
 - `POST /api/auth/login`
+- `GET /api/auth/me`
+- `PUT /api/auth/me`
 - `GET /api/flights`
+- `GET /api/flights/search`
 - `GET /api/flights/:id`
 - `GET /api/flights/:id/seats`
+- `POST /api/flights/:id/validate-availability`
 - `POST /api/purchase`
+- `GET /api/trips/current`
+- `POST /api/trips`
+- `POST /api/trips/:tripId/services`
+- `DELETE /api/trips/:tripId/services/:serviceId`
+- `GET /api/trips/:tripId/summary`
+- `POST /api/trips/:tripId/confirm`
 - `GET /api/reservations`
 - `GET /api/admin/stats`
 
-## Flujo de compra
+## Flujo funcional
 
-1. El usuario inicia sesion.
-2. Selecciona un vuelo disponible.
-3. El mapa de asientos bloquea asientos vendidos y solo permite un asiento seleccionado.
-4. Al confirmar, el backend crea pasajero, reserva, pago y marca el asiento como vendido en una transaccion.
-5. El dashboard admin consulta estadisticas reales desde SQLite.
+1. Registro/login con validaciones y password hash con salt.
+2. Busqueda de vuelos por origen/destino/IATA, fechas, pasajeros, filtros y paginacion.
+3. Seleccion de asiento y validacion de disponibilidad en tiempo real.
+4. Creacion de viaje y carrito de servicios (vuelo, hotel, transporte, comida).
+5. Confirmacion del viaje en transaccion: crea reservas/pagos y vende asientos.
+6. Perfil editable y dashboard admin con metricas reales.
